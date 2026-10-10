@@ -1,0 +1,95 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Clima actual</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="load()" [disabled]="state === 'loading'" aria-label="Actualizar">
+        <ion-icon slot="icon-only" name="refresh"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  <ion-toolbar>
+    <ion-searchbar
+      placeholder="Buscar ciudad o ubicación"
+      inputmode="search"
+      enterkeyhint="search"
+      [debounce]="500"
+      [value]="searchTerm"
+      (ionInput)="onSearch($event)"
+    ></ion-searchbar>
+    <ion-buttons slot="end">
+      <ion-button (click)="useCurrentLocation()" [disabled]="state === 'loading'" aria-label="Usar mi ubicación actual">
+        <ion-icon slot="start" name="locate-outline"></ion-icon>
+        Mi ubicación
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-refresher slot="fixed" (ionRefresh)="refresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div *ngIf="searching" class="search-status">
+    <ion-spinner name="dots"></ion-spinner>
+  </div>
+  <p *ngIf="searchMessage" class="search-status hint">{{ searchMessage }}</p>
+  <ion-list *ngIf="places.length" class="results">
+    <ion-item *ngFor="let p of places" button detail="false" (click)="selectPlace(p)">
+      <ion-icon slot="start" name="location-outline"></ion-icon>
+      <ion-label>{{ formatPlace(p) }}</ion-label>
+    </ion-item>
+  </ion-list>
+
+  <div *ngIf="state === 'loading'" class="center">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando información...</p>
+  </div>
+
+  <ion-card *ngIf="state === 'success' && weather">
+    <ion-card-header>
+      <ion-card-subtitle>
+        {{ placeLabel }} · {{ latitude | number: '1.4-4' }}, {{ longitude | number: '1.4-4' }}
+      </ion-card-subtitle>
+      <ion-card-title class="temp">
+        {{ weather.temperature | number: '1.0-1' }}{{ weather.units.temperature }}
+      </ion-card-title>
+      <ion-card-subtitle>{{ description }}</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-list lines="none">
+        <ion-item>
+          <ion-label>Sensación térmica</ion-label>
+          <ion-note slot="end">
+            {{ weather.apparentTemperature | number: '1.0-1' }}{{ weather.units.temperature }}
+          </ion-note>
+        </ion-item>
+        <ion-item>
+          <ion-label>Humedad</ion-label>
+          <ion-note slot="end">{{ weather.humidity }}{{ weather.units.humidity }}</ion-note>
+        </ion-item>
+        <ion-item>
+          <ion-label>Velocidad del viento</ion-label>
+          <ion-note slot="end">{{ weather.windSpeed }} {{ weather.units.windSpeed }}</ion-note>
+        </ion-item>
+        <ion-item>
+          <ion-label>Última lectura</ion-label>
+          <ion-note slot="end">{{ weather.time | date: 'short' }}</ion-note>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+
+  <div *ngIf="state === 'permission-denied' || state === 'offline' || state === 'error'" class="center">
+    <ion-icon
+      [name]="state === 'offline' ? 'cloud-offline-outline' : state === 'permission-denied' ? 'location-outline' : 'alert-circle-outline'"
+      size="large"
+      color="danger"
+    ></ion-icon>
+    <p>{{ errorMessage }}</p>
+    <p *ngIf="state === 'permission-denied'" class="hint">
+      Activa el permiso de ubicación en el navegador o en los ajustes del dispositivo.
+    </p>
+    <ion-button (click)="load()">Reintentar</ion-button>
+  </div>
+</ion-content>
